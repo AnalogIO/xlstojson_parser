@@ -3,24 +3,23 @@
 # djam@itu.dk
 # 26/03 - 2014
 
-import xlrd
+import xlrd, json, os, re, sys
 from collections import OrderedDict
-import json, os, re
 
 def find_xls_files(folder_path):
-  files = [f for f in os.listdir('.') if re.match(r'[A-Za-z]*.*.xls', f)]
+  files = [f for f in os.listdir(folder_path) if re.match(r'[A-Za-z]*.*.xls', f)]
   return files
 
 def xls_to_json(path):
   # Open the workbook and select the first worksheet
-  wb = xlrd.open_workbook('test_file.xls')
+  wb = xlrd.open_workbook(path)
   sh = wb.sheet_by_index(0)
    
   # List to hold dictionaries
   transaction_list = []
    
   # Iterate through each row in worksheet and fetch values into dict
-  # Notice range is hardcoded to 6 where the spreadsheet starts
+  # Notice range is hardcoded to 6 where the spreadsheet for iZettle starts
   for rownum in range(6, sh.nrows):
 
       transaction = OrderedDict()
@@ -36,32 +35,23 @@ def xls_to_json(path):
       transaction['variant']  = row_values[5]
       transaction['price']    = row_values[6]
 
-      """
-      print("date " + row_values[0])
-      print("time " + row_values[1])
-      print("product " + row_values[4])
-      print("variant " + row_values[5])
-      
-      print(" ")
-
-      """
-
       transaction_list.append(transaction)
-   
-  # Serialize the list of dicts to JSON
-  #j = json.dumps(cars_list)
 
   parsed_xls = json.dumps(transaction_list)
 
-  # Write to file
-  """
-  with open('data.json', 'w') as f:
-      f.write(parsed_xls)
-  """
-
   return parsed_xls
 
+""" MAIN EXECUTION SEGMENT BELOW """
+
+# Find all xls files in dir to be parsed
 xls = find_xls_files(".")
 
+# Serialize and print to terminal
 for filepath in xls:
-  print(xls_to_json(filepath))
+  if(len(sys.argv) == 2):
+    # If a second argument is given to the script, it dumps the output in a file by that name
+    with open(sys.argv[1], 'w') as f:
+      f.write(xls_to_json(filepath))
+  else:
+    # Writes output to terminal
+    print(xls_to_json(filepath))
